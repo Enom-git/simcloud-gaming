@@ -1,0 +1,965 @@
+<html><head><base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimCloud Gaming</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(45deg, #00439c, #0070cc, #0091ff, #00439c);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: white;
+            min-height: 100vh;
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            width: 200px;
+            height: 50px;
+        }
+
+        .logo text {
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: bold;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .auth-button {
+            background: #0070cc;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .auth-button:hover {
+            background: #00439c;
+            transform: scale(1.05);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            padding: 2rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+            transform: translate(-50%, -60%);
+        }
+
+        .modal.active .modal-content {
+            opacity: 1;
+            transform: translate(-50%, -50%);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            margin-top: 0.5rem;
+        }
+
+        .modal-content input[type="file"] {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            margin-top: 0.5rem;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform-origin: center;
+            position: relative;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .game-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .game-cover {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(145deg, rgba(0,0,0,0.4), rgba(0,0,0,0.2));
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .game-cover svg {
+            transition: transform 0.3s ease;
+        }
+
+        .game-card:hover .game-cover svg {
+            transform: scale(1.1);
+        }
+
+        .play-button {
+            background: #0070cc;
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 25px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .play-button:hover {
+            background: #00439c;
+            transform: scale(1.05);
+        }
+
+        .game-frame {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2000;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .game-frame iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .close-game {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(51, 51, 51, 0.9);
+            border: none;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 2001;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        .close-game:hover {
+            background: #444;
+            transform: scale(1.05);
+        }
+
+        .welcome-message {
+            display: none;
+            padding: 1rem;
+            text-align: right;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .search-container {
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-size: 1.1rem;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #0070cc;
+            box-shadow: 0 0 10px rgba(0, 112, 204, 0.5);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 112, 204, 0.3);
+        }
+
+        .dev-console {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a1a;
+            padding: 2rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            z-index: 2000;
+            color: white;
+            background: #1a1a1a;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .dev-console::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .dev-console::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+
+        .dev-console::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+        }
+
+        .dev-console::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .dev-console h2 {
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .user-entry {
+            background: rgba(255,255,255,0.05);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dev-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .dev-button {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dev-button:hover {
+            background: #444;
+        }
+
+        .dev-button.delete {
+            background: #aa0000;
+        }
+
+        .dev-button.delete:hover {
+            background: #cc0000;
+        }
+
+        .category-filters {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .filter-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-button.active {
+            background: #0070cc;
+        }
+
+        .publisher-info {
+            margin-top: 0.5rem;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+
+        #addGameModal select {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            margin-top: 0.5rem;
+        }
+
+        #addGameModal select option {
+            background: #1a1a1a;
+            color: white;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .preview-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .reports-view {
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <svg class="logo" viewBox="0 0 200 50">
+            <text x="10" y="35" fill="white" font-size="24px" font-weight="bold">SimCloud Gaming</text>
+        </svg>
+        <div class="auth-section">
+            <span id="welcomeMessage" class="welcome-message"></span>
+            <div id="authButtons" class="auth-buttons">
+                <button class="auth-button" onclick="showModal(&apos;login&apos;)">Login</button>
+                <button class="auth-button" onclick="showModal(&apos;signup&apos;)">Sign Up</button>
+            </div>
+            <button id="addGameButton" class="auth-button" onclick="showAddGameModal()" style="display:none;">Add Game</button>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" class="search-input" id="searchGames" placeholder="Search games...">
+    </div>
+
+    <div class="category-filters" id="categoryFilters">
+    </div>
+
+    <div class="game-grid" id="gameGrid"></div>
+
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Login</h2>
+            <form id="authForm">
+                <div class="form-group">
+                    <input type="text" id="email" placeholder="Username" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="password" placeholder="Password" required>
+                </div>
+                <button class="auth-button" type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="addGameModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeAddGameModal()">&#xd7;</button>
+            <h2>Add New Game</h2>
+            <form id="addGameForm">
+                <div class="form-group">
+                    <input type="text" id="gameTitle" placeholder="Game Title" required>
+                </div>
+                <div class="form-group">
+                    <input type="url" id="gameUrl" placeholder="Game URL (https://...)" required>
+                </div>
+                <div class="form-group">
+                    <input type="file" id="gameImage" accept="image/*" required>
+                    <div id="imagePreview" class="preview-image">Image Preview</div>
+                </div>
+                <div class="form-group">
+                    <select id="gameGenre" required>
+                        <option value>Select Genre</option>
+                        <option value="Action">Action</option>
+                        <option value="Puzzle">Puzzle</option>
+                        <option value="Strategy">Strategy</option>
+                        <option value="Racing">Racing</option>
+                        <option value="Sports">Sports</option>
+                        <option value="Multiplayer">Multiplayer</option>
+                        <option value="Board Game">Board Game</option>
+                        <option value="Word Game">Word Game</option>
+                        <option value="Incremental">Incremental</option>
+                    </select>
+                </div>
+                <button class="auth-button" type="submit">Add Game</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="devConsole" class="dev-console">
+        <h2>Developer Console</h2>
+        <div id="userList"></div>
+        <button class="auth-button" onclick="closeDevConsole()">Close</button>
+    </div>
+
+    <div id="gameFrame" class="game-frame">
+        <iframe></iframe>
+        <button class="close-game" onclick="closeGame()">Close Game</button>
+    </div>
+
+    <script>let isDev = false;
+let isDevConsoleOpen = false;
+const bannedEmails = new Set();
+let currentUser = null;
+const users = JSON.parse(localStorage.getItem('users')) || [];
+const gamesList = [{
+  title: "Slither.io",
+  genre: "Multiplayer Action",
+  url: "https://slither.io",
+  isFree: true,
+  publisher: "Developer",
+  isDev: true
+}, {
+  title: "Agar.io",
+  genre: "Multiplayer Action",
+  url: "https://agar.io",
+  isFree: true,
+  publisher: "Developer",
+  isDev: true
+}, {
+  title: "2048",
+  genre: "Puzzle",
+  url: "https://play2048.co",
+  isFree: true,
+  publisher: "Developer",
+  isDev: true
+}, {
+  title: "Cookie Clicker",
+  genre: "Incremental",
+  url: "https://orteil.dashnet.org/cookieclicker/",
+  isFree: true,
+  publisher: "Developer",
+  isDev: true
+}, {
+  title: "Wordle",
+  genre: "Word Game",
+  url: "https://www.nytimes.com/games/wordle",
+  isFree: true,
+  publisher: "Developer",
+  isDev: true
+}, {
+  title: "Chess.com",
+  genre: "Board Game",
+  url: "https://www.chess.com/play/online",
+  isFree: true,
+  publisher: "Developer",
+  isDev: true
+}, {
+  title: "Tetris",
+  genre: "Puzzle",
+  url: "https://tetris.com/play-tetris",
+  isFree: true,
+  publisher: "Developer",
+  isDev: true
+}];
+const userGames = JSON.parse(localStorage.getItem('userGames')) || [];
+const gameReports = JSON.parse(localStorage.getItem('gameReports')) || [];
+gamesList.push(...userGames);
+function createGameCard(game) {
+  const card = document.createElement('div');
+  card.className = 'game-card';
+  card.innerHTML = `
+        <div class="game-cover">
+            ${game.image ? `<img src="${game.image}" style="width:100%; height:100%; object-fit:cover;">` : `<svg width="50" height="50" viewBox="0 0 50 50">
+                    <rect x="10" y="10" width="30" height="30" fill="white" opacity="0.5"/>
+                    <polygon points="20,15 35,25 20,35" fill="white"/>
+                </svg>`}
+        </div>
+        <h3>${game.title}</h3>
+        <p>${game.genre}</p>
+        <div class="publisher-info">
+            Published by: ${game.publisher}
+            ${game.isDev ? '<span class="dev-badge">✓</span>' : ''}
+        </div>
+        ${currentUser && (currentUser.email === game.publisher || isDev) ? `<button class="auth-button" style="background: #aa0000; margin-top: 0.5rem;" 
+           onclick="deleteGame('${game.title}')">Remove Game</button>` : `<button class="auth-button" style="background: #aa0000; margin-top: 0.5rem;" 
+           onclick="reportGame('${game.title}')">Report Game</button>`}
+        <button class="play-button" onclick="playGame('${game.url}')">Play Now</button>
+    `;
+  return card;
+}
+function playGame(url) {
+  if (!currentUser) {
+    alert('Please login to play games');
+    showModal('login');
+    return;
+  }
+  const gameFrame = document.getElementById('gameFrame');
+  gameFrame.innerHTML = `
+            <button class="close-game" onclick="closeGame()">Close Game</button>
+            <iframe src="${url}" allow="fullscreen; autoplay"></iframe>
+  `;
+  gameFrame.style.display = 'block';
+}
+function closeGame() {
+  const gameFrame = document.getElementById('gameFrame');
+  gameFrame.style.display = 'none';
+}
+function showModal(type) {
+  const modal = document.getElementById('authModal');
+  const modalTitle = document.getElementById('modalTitle');
+  modal.style.display = 'block';
+  modalTitle.textContent = type === 'login' ? 'Login' : 'Sign Up';
+  document.getElementById('authForm').onsubmit = e => handleAuth(e, type);
+  setTimeout(() => {
+    modal.classList.add('active');
+  }, 10);
+}
+function handleAuth(e, type) {
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  if (email === 'name' && password === 'name') {
+    isDev = true;
+    currentUser = {
+      email: 'Developer',
+      isDev: true
+    };
+    updateAuthUI();
+    document.getElementById('authModal').style.display = 'none';
+    showDevConsole();
+    return;
+  }
+  if (bannedEmails.has(email)) {
+    alert('This account has been banned');
+    return;
+  }
+  if (type === 'signup') {
+    if (users.some(user => user.email === email)) {
+      alert('Username already exists');
+      return;
+    }
+    users.push({
+      email,
+      password
+    });
+    localStorage.setItem('users', JSON.stringify(users));
+    alert('Account created successfully');
+  }
+  const user = users.find(user => user.email === email && user.password === password);
+  if (user) {
+    currentUser = user;
+    updateAuthUI();
+    document.getElementById('authModal').classList.remove('active');
+    setTimeout(() => {
+      document.getElementById('authModal').style.display = 'none';
+    }, 300);
+    document.getElementById('authForm').reset();
+  } else {
+    alert('Invalid credentials');
+  }
+}
+function updateAuthUI() {
+  const authButtons = document.getElementById('authButtons');
+  const welcomeMessage = document.getElementById('welcomeMessage');
+  const addGameButton = document.getElementById('addGameButton');
+  if (currentUser) {
+    authButtons.style.display = 'none';
+    welcomeMessage.style.display = 'block';
+    welcomeMessage.textContent = `Welcome, ${currentUser.email}${isDev ? ' (Developer)' : ''}`;
+    addGameButton.style.display = 'block';
+    if (isDev) {
+      welcomeMessage.innerHTML += ` 
+        <button class="auth-button" onclick="toggleDevConsole()">Dev Console</button>
+        <button class="auth-button" onclick="toggleReportsView()">View Reports</button>
+      `;
+    }
+  } else {
+    authButtons.style.display = 'flex';
+    welcomeMessage.style.display = 'none';
+    addGameButton.style.display = 'none';
+  }
+}
+function toggleDevConsole() {
+  if (isDev) {
+    isDevConsoleOpen = !isDevConsoleOpen;
+    const console = document.getElementById('devConsole');
+    console.style.display = isDevConsoleOpen ? 'block' : 'none';
+    if (isDevConsoleOpen) {
+      updateUserList();
+      updateGamesList();
+    }
+  }
+}
+function deleteGame(gameTitle) {
+  if (confirm('Are you sure you want to delete this game?')) {
+    const index = gamesList.findIndex(game => game.title === gameTitle);
+    if (index > -1) {
+      gamesList.splice(index, 1);
+      const userGameIndex = userGames.findIndex(game => game.title === gameTitle);
+      if (userGameIndex > -1) {
+        userGames.splice(userGameIndex, 1);
+        localStorage.setItem('userGames', JSON.stringify(userGames));
+      }
+      refreshGameGrid();
+      alert('Game removed successfully');
+    }
+  }
+}
+function updateDevConsole() {
+  const userList = document.getElementById('userList');
+  userList.innerHTML = '<h3>Manage Users</h3>' + users.map(user => `
+    <div class="user-entry">
+      <span>${user.email}</span>
+      <div class="dev-actions">
+        <button class="dev-button delete" onclick="deleteAccount('${user.email}')">Delete Account</button>
+        <button class="dev-button" onclick="banEmail('${user.email}')">Ban Email</button>
+      </div>
+    </div>
+  `).join('');
+}
+function updateUserList() {
+  const userList = document.getElementById('userList');
+  userList.innerHTML = '<h3>Manage Users</h3>' + users.map(user => `
+    <div class="user-entry">
+      <span>${user.email}</span>
+      <div class="dev-actions">
+        <button class="dev-button delete" onclick="deleteAccount('${user.email}')">Delete Account</button>
+        <button class="dev-button" onclick="banEmail('${user.email}')">Ban Email</button>
+      </div>
+    </div>
+  `).join('');
+}
+function showDevConsole() {
+  const console = document.getElementById('devConsole');
+  console.style.display = 'block';
+  updateUserList();
+}
+function closeDevConsole() {
+  isDevConsoleOpen = false;
+  document.getElementById('devConsole').style.display = 'none';
+}
+function deleteAccount(email) {
+  const index = users.findIndex(user => user.email === email);
+  if (index > -1) {
+    users.splice(index, 1);
+    localStorage.setItem('users', JSON.stringify(users));
+    updateUserList();
+  }
+}
+function banEmail(email) {
+  bannedEmails.add(email);
+  deleteAccount(email);
+}
+function showAddGameModal() {
+  const modal = document.getElementById('addGameModal');
+  modal.style.display = 'block';
+  setTimeout(() => {
+    modal.classList.add('active');
+  }, 10);
+}
+function closeAddGameModal() {
+  const modal = document.getElementById('addGameModal');
+  modal.classList.remove('active');
+  setTimeout(() => {
+    modal.style.display = 'none';
+    document.getElementById('addGameForm').reset();
+  }, 300);
+}
+document.getElementById('addGameForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  const title = document.getElementById('gameTitle').value;
+  const url = document.getElementById('gameUrl').value;
+  const genre = document.getElementById('gameGenre').value;
+  const imageFile = document.getElementById('gameImage').files[0];
+  if (!imageFile) {
+    alert('Please select an image for the game');
+    return;
+  }
+  try {
+    new URL(url);
+  } catch {
+    alert('Please enter a valid URL starting with https://');
+    return;
+  }
+  if (gamesList.some(game => game.title.toLowerCase() === title.toLowerCase())) {
+    alert('A game with this title already exists!');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const newGame = {
+      title: title,
+      url: url,
+      genre: genre,
+      image: e.target.result,
+      isFree: true,
+      publisher: currentUser ? currentUser.email : 'Anonymous',
+      isDev: currentUser ? currentUser.isDev : false
+    };
+    userGames.push(newGame);
+    gamesList.push(newGame);
+    localStorage.setItem('userGames', JSON.stringify(userGames));
+    refreshGameGrid();
+    addNewCategoryFilter(genre);
+    closeAddGameModal();
+    alert('Game added successfully!');
+  };
+  reader.readAsDataURL(imageFile);
+});
+document.getElementById('gameImage').addEventListener('change', handleImagePreview);
+function addNewCategoryFilter(newCategory) {
+  const existingCategories = Array.from(document.querySelectorAll('.filter-button')).map(btn => btn.textContent).filter(text => text !== 'All');
+  if (!existingCategories.includes(newCategory)) {
+    const categoryFilters = document.getElementById('categoryFilters');
+    const newButton = document.createElement('button');
+    newButton.className = 'filter-button';
+    newButton.onclick = () => filterGames(newCategory);
+    newButton.textContent = newCategory;
+    categoryFilters.appendChild(newButton);
+  }
+}
+function refreshGameGrid() {
+  const gameGrid = document.getElementById('gameGrid');
+  gameGrid.innerHTML = '';
+  gamesList.forEach(game => {
+    if (game.isFree) {
+      gameGrid.appendChild(createGameCard(game));
+    }
+  });
+}
+const categories = [...new Set(gamesList.map(game => game.genre))];
+document.getElementById('categoryFilters').innerHTML = `
+            <button class="filter-button active" onclick="filterGames('all')">All</button>
+            ${categories.map(cat => `
+                <button class="filter-button" onclick="filterGames('${cat}')">${cat}</button>
+            `).join('')}
+        `;
+function filterGames(category) {
+  const filteredGames = category === 'all' ? gamesList : gamesList.filter(game => game.genre === category);
+  document.querySelectorAll('.filter-button').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  const gameGrid = document.getElementById('gameGrid');
+  gameGrid.innerHTML = '';
+  filteredGames.forEach(game => {
+    if (game.isFree) {
+      gameGrid.appendChild(createGameCard(game));
+    }
+  });
+}
+const gameGrid = document.getElementById('gameGrid');
+window.onload = function () {
+  refreshGameGrid();
+  if (currentUser) {
+    updateAuthUI();
+  }
+};
+window.onclick = event => {
+  const modal = document.getElementById('authModal');
+  if (event.target === modal) {
+    modal.classList.remove('active');
+    setTimeout(() => {
+      modal.style.display = 'none';
+    }, 300);
+  }
+};
+document.getElementById('searchGames').addEventListener('input', function (e) {
+  const searchTerm = e.target.value.toLowerCase();
+  const filteredGames = gamesList.filter(game => game.title.toLowerCase().includes(searchTerm) || game.genre.toLowerCase().includes(searchTerm));
+  const gameGrid = document.getElementById('gameGrid');
+  gameGrid.innerHTML = '';
+  if (filteredGames.length === 0) {
+    gameGrid.innerHTML = '<p style="text-align: center; padding: 2rem;">No games found matching your search.</p>';
+  } else {
+    filteredGames.forEach(game => {
+      if (game.isFree) {
+        gameGrid.appendChild(createGameCard(game));
+      }
+    });
+  }
+});
+function handleImagePreview(event) {
+  const file = event.target.files[0];
+  const reader = new FileReader();
+  const preview = document.getElementById('imagePreview');
+  reader.onload = function (e) {
+    preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+  };
+  if (file) {
+    reader.readAsDataURL(file);
+  }
+}
+function reportGame(gameTitle) {
+  if (!currentUser) {
+    alert('Please login to report games');
+    showModal('login');
+    return;
+  }
+  const reason = prompt('Please provide a reason for reporting this game:');
+  if (reason) {
+    gameReports.push({
+      gameTitle,
+      reportedBy: currentUser.email,
+      reason,
+      timestamp: new Date().toISOString(),
+      status: 'pending'
+    });
+    localStorage.setItem('gameReports', JSON.stringify(gameReports));
+    alert('Game reported successfully. A developer will review this report.');
+  }
+}
+function toggleReportsView() {
+  const reportsDiv = document.getElementById('reportsView');
+  if (!reportsDiv) {
+    const reports = document.createElement('div');
+    reports.id = 'reportsView';
+    reports.className = 'reports-view';
+    reports.innerHTML = `
+      <h3>Game Reports</h3>
+      ${gameReports.length === 0 ? '<p>No reports found.</p>' : gameReports.map(report => `
+          <div class="user-entry">
+            <div>
+              <strong>${report.gameTitle}</strong><br>
+              Reported by: ${report.reportedBy}<br>
+              Reason: ${report.reason}<br>
+              Date: ${new Date(report.timestamp).toLocaleString()}
+            </div>
+            <div class="dev-actions">
+              ${gamesList.find(g => g.title === report.gameTitle) ? `
+                <button class="dev-button" onclick="playGame('${gamesList.find(g => g.title === report.gameTitle).url}')">Test Game</button>
+                <button class="dev-button delete" onclick="deleteGame('${report.gameTitle}')">Remove Game</button>
+              ` : '<span>(Game already removed)</span>'}
+              <button class="dev-button" onclick="dismissReport('${report.timestamp}')">Dismiss Report</button>
+            </div>
+          </div>
+        `).join('')}
+    `;
+    document.getElementById('devConsole').appendChild(reports);
+  } else {
+    reportsDiv.remove();
+  }
+}
+function dismissReport(timestamp) {
+  const index = gameReports.findIndex(r => r.timestamp === timestamp);
+  if (index > -1) {
+    gameReports.splice(index, 1);
+    localStorage.setItem('gameReports', JSON.stringify(gameReports));
+    toggleReportsView();
+    toggleReportsView();
+  }
+}
+function updateGamesList() {
+  const gameListDiv = document.createElement('div');
+  gameListDiv.innerHTML = '<h3>Manage Games</h3>' + gamesList.map(game => `
+                <div class="user-entry">
+                    <span>${game.title} (${game.genre})</span>
+                    <div class="dev-actions">
+                        <button class="dev-button delete" onclick="deleteGame('${game.title}')">Delete Game</button>
+                    </div>
+                </div>
+            `).join('');
+  const userList = document.getElementById('userList');
+  userList.insertAdjacentElement('afterend', gameListDiv);
+}</script>
+</body></html>
